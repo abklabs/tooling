@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+OS=$(uname)
+
+log::fatal () {
+    echo "FATAL: $*"
+    exit 1
+}
+
+log::info () {
+    echo "INFO: $*"
+}
+
+[[ $OS == Darwin ]] || log::fatal "bootstrapping currently only supports Darwin/OS X!"
+
+brew shellenv > /dev/null 2>&1 || log::fatal "this bootstrapper requires homebrew be installed: https://brew.sh"
+
+log::info "updating homebrew's metadata..."
+brew update
+
+log::info "installing required tooling via homebrew..."
+brew bundle
+
+log::info "done bootstrapping!"
