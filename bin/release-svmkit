@@ -1,0 +1,108 @@
+#!/usr/bin/env opsh
+# -*- mode: shell-script -*-
+# shellcheck shell=bash disable=SC2164,SC2103
+
+: "${PUSH=true}"
+
+lib::import git
+
+[[ $# -eq 2 ]] || log::fatal "usage: $0 <svmkitver> <pulumi-svmkitver>"
+
+SVMKIT_VERSION=$1
+shift
+PULUMI_SVMKIT_VERSION=$1
+shift
+BRANCH=main
+
+prepare-repo() {
+    local repo=$1
+    shift
+
+    log::info "preparing '$repo'..."
+    (
+        cd "$repo"
+        git::repo::is-clean || log::fatal "'$repo' isn't clean!"
+
+        git fetch origin
+        git reset --hard origin/main
+    )
+}
+
+(
+    cd pulumi-svmkit
+    git::repo::is-clean || log::fatal "pulumi-svmkit isn't clean!"
+)
+
+make-tag() {
+    local name=$1
+    shift
+    local tag=$1
+    shift
+
+    log::info "tagging $name $tag..."
+    (
+        git::repo::is-clean || log::fatal "repo isn't clean!"
+        [[ $(git::repo::current-branch) == "$BRANCH" ]] || log::fatal "repo isn't on the '$BRANCH' branch!"
+        git tag -s -m "$name $tag" "$tag"
+    )
+}
+
+prepare-repo svmkit
+prepare-repo pulumi-svmkit
+
+(
+    cd svmkit
+
+    if git::tag::exists "pkg/$SVMKIT_VERSION"; then
+        log::warn "tag pkg/$SVMKIT_VERSION already exists in svmkit, skipping"
+        exit 0
+    fi
+
+    make-tag svmkit "pkg/$SVMKIT_VERSION"
+
+    if "$PUSH"; then
+        git push --tags
+    fi
+)
+
+(
+    cd pulumi-svmkit
+
+    if git::tag::exists "$PULUMI_SVMKIT_VERSION"; then
+        log::fatal "pulumi-svmkit already has an $PULUMI_SVMKIT_VERSION!"
+    fi
+
+    cd provider
+    go get github.com/abklabs/svmkit/pkg@"$SVMKIT_VERSION"
+    go mod tidy
+    git add go.*
+    git commit -m "Update to svmkit $SVMKIT_VERSION"
+
+    cd ..
+    go work sync
+
+    if ! git::repo::is-clean; then
+        git commit -a -m "go work sync"
+    fi
+
+    make
+    echo "${PULUMI_SVMKIT_VERSION#v}" >sdk/dotnet/version.txt
+    git commit -a -m "Resync generated SDK"
+
+    make-tag pulumi-svmkit "$PULUMI_SVMKIT_VERSION"
+    make-tag pulumi-svmkit "sdk/go/$PULUMI_SVMKIT_VERSION"
+    make
+
+    if ! git::repo::is-clean; then
+        log::error "repository wasn't clean after tagging and rebuild!"
+        git status
+        exit 1
+    fi
+
+    if "$PUSH"; then
+        git push
+        git push --tags
+    fi
+)
+
+log::info "finished tagging!"
