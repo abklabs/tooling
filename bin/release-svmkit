@@ -87,6 +87,7 @@ prepare-repo pulumi-svmkit
 
     make
     echo "${PULUMI_SVMKIT_VERSION#v}" >sdk/dotnet/version.txt
+    git add sdk
     git commit -a -m "Resync generated SDK"
 
     make-tag pulumi-svmkit "$PULUMI_SVMKIT_VERSION"
