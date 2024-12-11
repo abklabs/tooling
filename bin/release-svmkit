@@ -72,11 +72,16 @@ prepare-repo pulumi-svmkit
         log::fatal "pulumi-svmkit already has an $PULUMI_SVMKIT_VERSION!"
     fi
 
+    git::repo::is-clean || log::fatal "pulumi-svmkit isn't clean; refusing to tag!"
+
     cd provider
     go get github.com/abklabs/svmkit/pkg@"$SVMKIT_VERSION"
-    go mod tidy
-    git add go.*
-    git commit -m "Update to svmkit $SVMKIT_VERSION"
+
+    if ! git::repo::is-clean ; then
+	go mod tidy
+	git add go.*
+	git commit -m "Update to svmkit $SVMKIT_VERSION"
+    fi
 
     cd ..
     go work sync
