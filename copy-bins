@@ -1,0 +1,41 @@
+#!/usr/bin/env opsh
+# shellcheck shell=bash
+
+SOURCE_SCRIPT="bin/ssh-to-host"
+
+if [[ ! -f "$SOURCE_SCRIPT" ]]; then
+    log::fatal "$SOURCE_SCRIPT not found. Please run this script from your project's root or adjust the path."
+    exit 1
+fi
+
+# cross-platform realpath
+to_abs_path() {
+    local p
+    p="$1"
+    shift
+
+    python -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$p"
+}
+
+main() (
+    while IFS= read -r file; do
+
+        project_root="$(
+            echo "$file" |
+                sed -E 's|/+|/|g' |
+                sed -E 's|^(\.\.\/[^/]+).*|\1|'
+        )"
+
+        project_root="$(to_abs_path "$project_root")"
+
+        log::info "Copying $SOURCE_SCRIPT to $file"
+        cp "$SOURCE_SCRIPT" "$file"
+
+        if ! opsh rewrite-opsh-shebang "$file" "$project_root"; then
+            log::fatal "Rewrite failed for $file, aborting..."
+        fi
+
+    done < <(find .. -type f -name 'ssh-to-host' -not -path '*/tooling/*')
+)
+
+main
