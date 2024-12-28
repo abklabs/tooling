@@ -9,7 +9,12 @@ Note: This bootstrap will not currently install Homebrew.  Please
 follow the instructions at https://brew.sh if you haven't already
 installed it on your system.
 
-To setup your development environment, please run the following:
+Scripts that are shared by all ABKLabs projects are also stored 
+in this repository. Simply run `make install` to install the 
+latest version of these scripts. Then commit your changes to each
+project's repository.
+
+### To setup your development environment, please run the following:
 
 1. Clone this repository:
 
@@ -25,4 +30,3 @@ git clone git@github.com:abklabs/tooling
 cd ~/sandbox/tooling
 ./bootstrap
 ```
-
