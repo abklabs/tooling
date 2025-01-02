@@ -77,10 +77,10 @@ prepare-repo pulumi-svmkit
     cd provider
     go get github.com/abklabs/svmkit/pkg@"$SVMKIT_VERSION"
 
-    if ! git::repo::is-clean ; then
-	go mod tidy
-	git add go.*
-	git commit -m "Update to svmkit $SVMKIT_VERSION"
+    if ! git::repo::is-clean; then
+        go mod tidy
+        git add go.*
+        git commit -m "Update to svmkit $SVMKIT_VERSION"
     fi
 
     cd ..
