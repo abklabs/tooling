@@ -6,12 +6,23 @@
 
 lib::import git
 
-[[ $# -eq 2 ]] || log::fatal "usage: $0 <svmkitver> <pulumi-svmkitver>"
+usage() {
+    [[ $# -eq 0 ]] || log::error "$*"
+    log::fatal "usage: $0 <svmkitver> <pulumi-svmkitver>"
+}
+
+[[ $# -eq 0 ]] && usage "An svmkit version is required!"
 
 SVMKIT_VERSION=$1
 shift
+
+[[ $# -eq 0 ]] && usage "A pulumi-svmkit version is required!"
+
 PULUMI_SVMKIT_VERSION=$1
 shift
+
+[[ $# -eq 0 ]] || usage "Too many arguments provided!"
+
 BRANCH=main
 
 prepare-repo() {
