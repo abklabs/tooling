@@ -4,6 +4,9 @@
 
 : "${PUSH=true}"
 
+SEMVER_RE_NUM="(0|[1-9][0-9]*)"
+SEMVER_RE_CHECK="v${SEMVER_RE_NUM}\\.${SEMVER_RE_NUM}\\.${SEMVER_RE_NUM}\$"
+
 lib::import git
 
 usage() {
@@ -39,6 +42,16 @@ prepare-repo() {
     )
 }
 
+check-tag() {
+    local tag=$1
+    shift
+
+    local name=$1
+    shift
+
+    [[ "$tag" =~ $SEMVER_RE_CHECK ]] || log::fatal "$name version '$tag' must be a semver! e.g. v4.5.6"
+}
+
 make-tag() {
     local name=$1
     shift
@@ -53,9 +66,11 @@ make-tag() {
     )
 }
 
+check-tag "$SVMKIT_VERSION" svmkit
 prepare-repo svmkit
 
-if [[ -v PULUMI_SVMKIT_VERSION ]] ; then
+if [[ -v PULUMI_SVMKIT_VERSION ]]; then
+    check-tag "$PULUMI_SVMKIT_VERSION" pulumi-svmkit
     prepare-repo pulumi-svmkit
 else
     log::warn "pulumi-svmkit version not provided; skipping tagging."
