@@ -39,11 +39,6 @@ prepare-repo() {
     )
 }
 
-(
-    cd pulumi-svmkit
-    git::repo::is-clean || log::fatal "pulumi-svmkit isn't clean!"
-)
-
 make-tag() {
     local name=$1
     shift
