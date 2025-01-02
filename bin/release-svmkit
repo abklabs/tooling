@@ -8,7 +8,7 @@ lib::import git
 
 usage() {
     [[ $# -eq 0 ]] || log::error "$*"
-    log::fatal "usage: $0 <svmkitver> <pulumi-svmkitver>"
+    log::fatal "usage: $0 <svmkitver> [<pulumi-svmkitver>]"
 }
 
 [[ $# -eq 0 ]] && usage "An svmkit version is required!"
@@ -16,10 +16,10 @@ usage() {
 SVMKIT_VERSION=$1
 shift
 
-[[ $# -eq 0 ]] && usage "A pulumi-svmkit version is required!"
-
-PULUMI_SVMKIT_VERSION=$1
-shift
+if [[ $# -gt 0 ]]; then
+    PULUMI_SVMKIT_VERSION=$1
+    shift
+fi
 
 [[ $# -eq 0 ]] || usage "Too many arguments provided!"
 
@@ -54,7 +54,12 @@ make-tag() {
 }
 
 prepare-repo svmkit
-prepare-repo pulumi-svmkit
+
+if [[ -v PULUMI_SVMKIT_VERSION ]] ; then
+    prepare-repo pulumi-svmkit
+else
+    log::warn "pulumi-svmkit version not provided; skipping tagging."
+fi
 
 (
     cd svmkit
@@ -70,6 +75,8 @@ prepare-repo pulumi-svmkit
         git push --tags
     fi
 )
+
+[[ -v PULUMI_SVMKIT_VERSION ]] || exit 0
 
 (
     cd pulumi-svmkit
