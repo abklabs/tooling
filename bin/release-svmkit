@@ -66,6 +66,17 @@ make-tag() {
     )
 }
 
+check-env() {
+    local latest local
+
+    latest=$(curl -sSL https://api.github.com/repos/pulumi/pulumi/releases/latest | jq -r ".tag_name") || log::fatal "couldn't query github for the latest pulumi version!"
+    local=$(pulumi version) || log::fatal "couldn't query the local pulumi version!"
+
+    [[ "$latest" = "$local" ]] || log::fatal "please upgrade your local pulumi to $latest."
+}
+
+check-env
+
 check-tag "$SVMKIT_VERSION" svmkit
 prepare-repo svmkit
 
