@@ -19,11 +19,13 @@ to_abs_path() {
 }
 
 to_rel_path() {
-    local p
+    local p base
     p="$1"
     shift
+    base="$1"
+    shift
 
-    python -c "import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))" "$p" "$PROJECT_ROOT"
+    python -c "import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))" "$p" "$base"
 }
 
 find_nearest_opsh() {
