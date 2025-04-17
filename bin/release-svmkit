@@ -95,6 +95,7 @@ fi
         exit 0
     fi
 
+    make-tag svmkit "$SVMKIT_VERSION"
     make-tag svmkit "pkg/$SVMKIT_VERSION"
 
     if "$PUSH"; then
