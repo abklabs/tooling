@@ -124,11 +124,6 @@ fi
     fi
 
     cd ..
-    go work sync
-
-    if ! git::repo::is-clean; then
-        git commit -a -m "go work sync"
-    fi
 
     make
     echo "${PULUMI_SVMKIT_VERSION#v}" >sdk/dotnet/version.txt
