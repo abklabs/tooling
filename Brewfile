@@ -1,4 +1,13 @@
 tap "abklabs/tooling"
 tap "alexanderguy/tooling"
+tap "pulumi/tap"
 
+brew "golang"
+brew "golangci-lint"
+brew "node"
 brew "opsh"
+brew "pulumi"
+brew "pulumi/tap/pulumictl"
+brew "shellcheck"
+brew "shfmt"
+brew "yarn"
