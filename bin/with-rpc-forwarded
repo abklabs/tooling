@@ -1,0 +1,30 @@
+#!/usr/bin/env opsh
+
+lib::import ssh
+
+ssh::begin
+
+ssh::config <<EOF
+Host *
+     UserKnownHostsFile /dev/null
+     StrictHostKeyChecking off
+EOF
+
+HOSTINDEX=0
+CONNECTION="$(pulumi stack output --show-secrets nodes | jq -r ".[$HOSTINDEX]"'.connection as
+  {privateKey: $private_key, $user, $host}
+    ?// {$private_key, $user, $host}
+    | {privateKey: ($private_key // error), $user, $host}
+')"
+
+jq -r '.privateKey' <<<"$CONNECTION" | ssh::key::add
+
+USER=$(jq -r '.user' <<<"$CONNECTION")
+HOSTNAME=$(jq -r '.host' <<<"$CONNECTION")
+
+ssh::background::run -L 8899:localhost:8899 -L 8900:localhost:8900 "$USER@$HOSTNAME"
+
+RET=0
+SOLANA_RPC_URL=http://localhost:8899 "${@}" || RET=$?
+
+exit $RET
