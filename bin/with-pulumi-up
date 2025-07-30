@@ -15,11 +15,17 @@ usage () {
 [[ $# -gt 0 ]] || usage "you must provide a command to run after the pulumi stack is setup"
 [[ -f Pulumi.yaml ]] || usage "this must be run from a directory with a pulumi stack"
 
+[[ -n "${BUILDKITE:-}" ]] &&  echo "--- Pulumi up"
+
 pulumi up --yes 
 
 RET=0
 
+[[ -n "${BUILDKITE:-}" ]] &&  echo -e "^^^ +++\n--- Testing: $@"
+
 "${@}" || RET=$?
+
+[[ -n "${BUILDKITE:-}" ]] && echo -e "^^^ +++\n--- Pulumi down"
 
 pulumi down --yes
 
