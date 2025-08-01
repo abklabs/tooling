@@ -25,7 +25,7 @@ rm -rf node_modules venv
 pulumi install
 
 if [[ -d node_modules ]] ; then
-    yarn link "@svmkit/pulumi-svmkit"
+    yarn add "$PULUMI_SVMKIT_DIR"/sdk/nodejs/bin
 elif [[ -d venv ]] ; then
     ./venv/bin/pip install "$PULUMI_SVMKIT_DIR"/sdk/python/bin/dist/pulumi_svmkit-*.tar.gz
 else
