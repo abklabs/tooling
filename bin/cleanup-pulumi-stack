@@ -1,0 +1,33 @@
+#!/usr/bin/env opsh
+# -*- mode: shell-script -*-
+# shellcheck shell=bash
+
+usage() {
+	local ret=0
+
+	if [[ $# -gt 0 ]]; then
+		log::error "$*"
+		ret=1
+	fi
+
+	echo "usage: $0 stackname"
+	exit "$ret"
+}
+
+if [[ $# -ne 1 ]] ; then
+    usage "you must provide the pulumi stack you wish to clean up"
+fi
+
+[[ -f Pulumi.yaml ]] || usage "this must be run from a directory with a pulumi stack"
+
+PULUMI_STACK_NAME=$1
+shift
+
+if ! pulumi stack select "$PULUMI_STACK_NAME" 2>/dev/null; then
+	exit 0
+fi
+
+pulumi destroy --yes --continue-on-error
+pulumi stack rm --yes "$PULUMI_STACK_NAME"
+
+rm -rf node_modules venv
