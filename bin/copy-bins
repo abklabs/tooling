@@ -1,7 +1,7 @@
 #!/usr/bin/env opsh
 # shellcheck shell=bash
 
-SOURCE_SCRIPT="bin/ssh-to-host"
+SOURCE_SCRIPT="$SCRIPTDIR/ssh-to-host"
 
 if [[ ! -f "$SOURCE_SCRIPT" ]]; then
     log::fatal "$SOURCE_SCRIPT not found. Please run this script from your project's root or adjust the path."
@@ -31,7 +31,7 @@ main() (
         log::info "Copying $SOURCE_SCRIPT to $file"
         cp "$SOURCE_SCRIPT" "$file"
 
-        if ! opsh rewrite-opsh-shebang "$file" "$project_root"; then
+        if ! opsh "$SCRIPTDIR/rewrite-opsh-shebang" "$file" "$project_root"; then
             log::fatal "Rewrite failed for $file, aborting..."
         fi
 
