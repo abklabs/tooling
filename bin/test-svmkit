@@ -16,98 +16,98 @@ lib::import step-runner command
 export GOOGLE_PROJECT GOOGLE_REGION GOOGLE_ZONE
 
 check-set-dir() {
-    local var=$1
-    shift
+	local var=$1
+	shift
 
-    [[ -v $var ]] || log::fatal "$var must be set"
+	[[ -v $var ]] || log::fatal "$var must be set"
 
-    declare -n ref="$var"
-    ref="$(realpath "${ref}")"
-    [[ -d $ref ]] || log::fatal "$var must be a directory"
+	declare -n ref="$var"
+	ref="$(realpath "${ref}")"
+	[[ -d $ref ]] || log::fatal "$var must be a directory"
 }
 
 pulumi::run() {
-    PATH=$PULUMI_SVMKIT_DIR/bin:$PATH pulumi --color="$PULUMI_COLOR" "$@"
+	PATH=$PULUMI_SVMKIT_DIR/bin:$PATH pulumi --color="$PULUMI_COLOR" "$@"
 }
 
 if command::exists pulumi-resource-svmkit; then
-    log::fatal "a local pulumi-resource-svmkit provider is in your PATH, and that's bad"
+	log::fatal "a local pulumi-resource-svmkit provider is in your PATH, and that's bad"
 fi
 
 for i in SVMKIT_DIR PULUMI_SVMKIT_DIR SVMKIT_EXAMPLES_DIR; do
-    check-set-dir $i
-    log::info $i=${!i}
+	check-set-dir $i
+	log::info $i=${!i}
 done
 
 step::010::setup-svmkit() {
-    (cd "$SVMKIT_DIR" && make check)
+	(cd "$SVMKIT_DIR" && make check)
 }
 
 step::020::setup-pulumi-svmkit() {
-    (cd "$PULUMI_SVMKIT_DIR/provider" && go mod edit -replace github.com/abklabs/svmkit/pkg="$SVMKIT_DIR/pkg")
+	(cd "$PULUMI_SVMKIT_DIR/provider" && go mod edit -replace github.com/abklabs/svmkit/pkg="$SVMKIT_DIR/pkg")
 }
 
 step::030::build-pulumi-svmkit() {
-    (cd "$PULUMI_SVMKIT_DIR" && make)
+	(cd "$PULUMI_SVMKIT_DIR" && make)
 }
 
 step::040::install-example-aws-network-spe-py() {
-    (
-        cd "$SVMKIT_EXAMPLES_DIR/aws-network-spe-py"
-        pulumi::run stack init test-aws
-        rm -rf venv && pulumi::run install
-        ./venv/bin/pip install "$PULUMI_SVMKIT_DIR"/sdk/python/bin/dist/pulumi_svmkit-*.tar.gz
-        pulumi::run config set node:count "$NODE_COUNT"
-        pulumi::run preview
-    )
+	(
+		cd "$SVMKIT_EXAMPLES_DIR/aws-network-spe-py"
+		pulumi::run stack init test-aws
+		rm -rf venv && pulumi::run install
+		./venv/bin/pip install "$PULUMI_SVMKIT_DIR"/sdk/python/bin/dist/pulumi_svmkit-*.tar.gz
+		pulumi::run config set node:count "$NODE_COUNT"
+		pulumi::run preview
+	)
 }
 
 step::050::pulumi-up-aws-network-spe-py() {
-    "$BRING_UP_STACK" || return 0
+	"$BRING_UP_STACK" || return 0
 
-    (
-        cd "$SVMKIT_EXAMPLES_DIR/aws-network-spe-py"
-        pulumi::run up --yes
-        pulumi::run down --yes
-    )
+	(
+		cd "$SVMKIT_EXAMPLES_DIR/aws-network-spe-py"
+		pulumi::run up --yes
+		pulumi::run down --yes
+	)
 }
 
 step::060::clean-up-aws-network-spe-py() {
-    (
-        cd "$SVMKIT_EXAMPLES_DIR/aws-network-spe-py"
-        pulumi::run stack rm --yes test-aws
-        rm -rf venv
-    )
+	(
+		cd "$SVMKIT_EXAMPLES_DIR/aws-network-spe-py"
+		pulumi::run stack rm --yes test-aws
+		rm -rf venv
+	)
 }
 
 step::070::install-example-gcp-network-spe-ts() {
-    (
-        cd "$SVMKIT_EXAMPLES_DIR/gcp-network-spe-ts"
-        pulumi::run stack init test-gcp
-        rm -rf node_modules && pulumi::run install
-        yarn link "@svmkit/pulumi-svmkit"
-        pulumi::run config set node:count "$NODE_COUNT"
-        pulumi::run preview
-    )
+	(
+		cd "$SVMKIT_EXAMPLES_DIR/gcp-network-spe-ts"
+		pulumi::run stack init test-gcp
+		rm -rf node_modules && pulumi::run install
+		yarn link "@svmkit/pulumi-svmkit"
+		pulumi::run config set node:count "$NODE_COUNT"
+		pulumi::run preview
+	)
 }
 
 step::080::pulumi-up-gcp-network-spe-ts() {
-    "$BRING_UP_STACK" || return 0
+	"$BRING_UP_STACK" || return 0
 
-    (
-        cd "$SVMKIT_EXAMPLES_DIR/gcp-network-spe-ts"
-        pulumi::run up --yes
-        pulumi::run down --yes
+	(
+		cd "$SVMKIT_EXAMPLES_DIR/gcp-network-spe-ts"
+		pulumi::run up --yes
+		pulumi::run down --yes
 
-    )
+	)
 }
 
 step::090::clean-up-gcp-network-spe-ts() {
-    (
-        cd "$SVMKIT_EXAMPLES_DIR/gcp-network-spe-ts"
-        pulumi::run stack rm --yes test-gcp
-        rm -rf node_modules
-    )
+	(
+		cd "$SVMKIT_EXAMPLES_DIR/gcp-network-spe-ts"
+		pulumi::run stack rm --yes test-gcp
+		rm -rf node_modules
+	)
 }
 
 steps::run step "$@"

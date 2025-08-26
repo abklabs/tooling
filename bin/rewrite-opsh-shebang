@@ -2,8 +2,8 @@
 # shellcheck shell=bash
 
 if [[ "$#" -ne 2 ]]; then
-    log::fatal "Usage: $0 <target_file> <project_root>"
-    exit 1
+	log::fatal "Usage: $0 <target_file> <project_root>"
+	exit 1
 fi
 
 TARGET_FILE="$1"
@@ -11,79 +11,79 @@ PROJECT_ROOT="$2"
 
 # cross-platform path functions
 to_abs_path() {
-    local p
-    p="$1"
-    shift
+	local p
+	p="$1"
+	shift
 
-    python -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$p"
+	python -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$p"
 }
 
 to_rel_path() {
-    local p base
-    p="$1"
-    shift
-    base="$1"
-    shift
+	local p base
+	p="$1"
+	shift
+	base="$1"
+	shift
 
-    python -c "import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))" "$p" "$base"
+	python -c "import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))" "$p" "$base"
 }
 
 find_nearest_opsh() {
-    local dir root
-    dir="$1"
-    shift
-    root="$1"
-    shift
+	local dir root
+	dir="$1"
+	shift
+	root="$1"
+	shift
 
-    while [[ "$dir" != "/" ]]; do
-        local found
-        found="$(
-            (
-                cd "$dir" || exit 1
-                find . -type f -name 'opsh' -print -quit 2>/dev/null
-            ) || true
-        )"
+	while [[ "$dir" != "/" ]]; do
+		local found
+		found="$(
+			(
+				cd "$dir" || exit 1
+				find . -type f -name 'opsh' -print -quit 2>/dev/null
+			) || true
+		)"
 
-        if [[ -n "$found" ]]; then
-            local abs_found
-            abs_found="$(cd "$dir" && realpath "$found")"
-            echo "$abs_found"
-            return 0
-        fi
+		if [[ -n "$found" ]]; then
+			local abs_found
+			abs_found="$(cd "$dir" && realpath "$found")"
+			echo "$abs_found"
+			return 0
+		fi
 
-        if [[ "$dir" == "$root" ]]; then
-            break
-        fi
+		if [[ "$dir" == "$root" ]]; then
+			break
+		fi
 
-        dir="$(dirname "$dir")"
-    done
+		dir="$(dirname "$dir")"
+	done
 
-    return 1
+	return 1
 }
 
 main() {
-    local dir
-    dir="$(dirname "$TARGET_FILE")"
+	local dir
+	dir="$(dirname "$TARGET_FILE")"
 
-    dir="$(to_abs_path "$dir")"
+	dir="$(to_abs_path "$dir")"
 
-    local opsh_path
-    if ! opsh_path="$(find_nearest_opsh "$dir" "$PROJECT_ROOT")"; then
-        log::fatal "No 'opsh' found under $PROJECT_ROOT for $TARGET_FILE. Aborting shebang rewrite."
-        exit 1
-    fi
+	local opsh_path
+	if ! opsh_path="$(find_nearest_opsh "$dir" "$PROJECT_ROOT")"; then
+		log::fatal "No 'opsh' found under $PROJECT_ROOT for $TARGET_FILE. Aborting shebang rewrite."
+		exit 1
+	fi
 
-    local rel_opsh
-    rel_opsh=$(to_rel_path "$opsh_path" "$dir")
+	local rel_opsh
+	rel_opsh=$(to_rel_path "$opsh_path" "$dir")
 
-    if [[ -z "$rel_opsh" ]]; then
-        log::fatal "Could not compute relative path."
-        exit 1
-    fi
+	if [[ -z "$rel_opsh" ]]; then
+		log::fatal "Could not compute relative path."
+		exit 1
+	fi
 
-    sed -i '' "1s|^.*|#!/usr/bin/env $rel_opsh|" "$TARGET_FILE"
+	sed -i '' "1s|^.*|#!/usr/bin/env $rel_opsh|" "$TARGET_FILE"
 
-    log::info "Updated shebang in $TARGET_FILE => #!/usr/bin/env $rel_opsh"
+	log::info "Updated shebang in $TARGET_FILE => #!/usr/bin/env $rel_opsh"
 }
 
 main

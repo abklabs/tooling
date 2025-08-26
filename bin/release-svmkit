@@ -10,8 +10,8 @@ SEMVER_RE_CHECK="v${SEMVER_RE_NUM}\\.${SEMVER_RE_NUM}\\.${SEMVER_RE_NUM}\$"
 lib::import git
 
 usage() {
-    [[ $# -eq 0 ]] || log::error "$*"
-    log::fatal "usage: $0 <svmkitver> [<pulumi-svmkitver>]"
+	[[ $# -eq 0 ]] || log::error "$*"
+	log::fatal "usage: $0 <svmkitver> [<pulumi-svmkitver>]"
 }
 
 [[ $# -eq 0 ]] && usage "An svmkit version is required!"
@@ -20,8 +20,8 @@ SVMKIT_VERSION=$1
 shift
 
 if [[ $# -gt 0 ]]; then
-    PULUMI_SVMKIT_VERSION=$1
-    shift
+	PULUMI_SVMKIT_VERSION=$1
+	shift
 fi
 
 [[ $# -eq 0 ]] || usage "Too many arguments provided!"
@@ -29,50 +29,50 @@ fi
 BRANCH=main
 
 prepare-repo() {
-    local repo=$1
-    shift
+	local repo=$1
+	shift
 
-    log::info "preparing '$repo'..."
-    (
-        cd "$repo"
-        git::repo::is-clean || log::fatal "'$repo' isn't clean!"
+	log::info "preparing '$repo'..."
+	(
+		cd "$repo"
+		git::repo::is-clean || log::fatal "'$repo' isn't clean!"
 
-        git fetch origin
-        git reset --hard origin/main
-    )
+		git fetch origin
+		git reset --hard origin/main
+	)
 }
 
 check-tag() {
-    local tag=$1
-    shift
+	local tag=$1
+	shift
 
-    local name=$1
-    shift
+	local name=$1
+	shift
 
-    [[ "$tag" =~ $SEMVER_RE_CHECK ]] || log::fatal "$name version '$tag' must be a semver! e.g. v4.5.6"
+	[[ "$tag" =~ $SEMVER_RE_CHECK ]] || log::fatal "$name version '$tag' must be a semver! e.g. v4.5.6"
 }
 
 make-tag() {
-    local name=$1
-    shift
-    local tag=$1
-    shift
+	local name=$1
+	shift
+	local tag=$1
+	shift
 
-    log::info "tagging $name $tag..."
-    (
-        git::repo::is-clean || log::fatal "repo isn't clean!"
-        [[ $(git::repo::current-branch) == "$BRANCH" ]] || log::fatal "repo isn't on the '$BRANCH' branch!"
-        git tag -s -m "$name $tag" "$tag"
-    )
+	log::info "tagging $name $tag..."
+	(
+		git::repo::is-clean || log::fatal "repo isn't clean!"
+		[[ $(git::repo::current-branch) == "$BRANCH" ]] || log::fatal "repo isn't on the '$BRANCH' branch!"
+		git tag -s -m "$name $tag" "$tag"
+	)
 }
 
 check-env() {
-    local latest local
+	local latest local
 
-    latest=$(curl -sSL https://api.github.com/repos/pulumi/pulumi/releases/latest | jq -r ".tag_name") || log::fatal "couldn't query github for the latest pulumi version!"
-    local=$(pulumi version) || log::fatal "couldn't query the local pulumi version!"
+	latest=$(curl -sSL https://api.github.com/repos/pulumi/pulumi/releases/latest | jq -r ".tag_name") || log::fatal "couldn't query github for the latest pulumi version!"
+	local=$(pulumi version) || log::fatal "couldn't query the local pulumi version!"
 
-    [[ "$latest" = "$local" ]] || log::fatal "please upgrade your local pulumi to $latest."
+	[[ "$latest" = "$local" ]] || log::fatal "please upgrade your local pulumi to $latest."
 }
 
 check-env
@@ -81,69 +81,69 @@ check-tag "$SVMKIT_VERSION" svmkit
 prepare-repo svmkit
 
 if [[ -v PULUMI_SVMKIT_VERSION ]]; then
-    check-tag "$PULUMI_SVMKIT_VERSION" pulumi-svmkit
-    prepare-repo pulumi-svmkit
+	check-tag "$PULUMI_SVMKIT_VERSION" pulumi-svmkit
+	prepare-repo pulumi-svmkit
 else
-    log::warn "pulumi-svmkit version not provided; skipping tagging."
+	log::warn "pulumi-svmkit version not provided; skipping tagging."
 fi
 
 (
-    cd svmkit
+	cd svmkit
 
-    if git::tag::exists "pkg/$SVMKIT_VERSION"; then
-        log::warn "tag pkg/$SVMKIT_VERSION already exists in svmkit, skipping"
-        exit 0
-    fi
+	if git::tag::exists "pkg/$SVMKIT_VERSION"; then
+		log::warn "tag pkg/$SVMKIT_VERSION already exists in svmkit, skipping"
+		exit 0
+	fi
 
-    make-tag svmkit "$SVMKIT_VERSION"
-    make-tag svmkit "pkg/$SVMKIT_VERSION"
+	make-tag svmkit "$SVMKIT_VERSION"
+	make-tag svmkit "pkg/$SVMKIT_VERSION"
 
-    if "$PUSH"; then
-        git push --tags
-    fi
+	if "$PUSH"; then
+		git push --tags
+	fi
 )
 
 [[ -v PULUMI_SVMKIT_VERSION ]] || exit 0
 
 (
-    cd pulumi-svmkit
+	cd pulumi-svmkit
 
-    if git::tag::exists "$PULUMI_SVMKIT_VERSION"; then
-        log::fatal "pulumi-svmkit already has an $PULUMI_SVMKIT_VERSION!"
-    fi
+	if git::tag::exists "$PULUMI_SVMKIT_VERSION"; then
+		log::fatal "pulumi-svmkit already has an $PULUMI_SVMKIT_VERSION!"
+	fi
 
-    git::repo::is-clean || log::fatal "pulumi-svmkit isn't clean; refusing to tag!"
+	git::repo::is-clean || log::fatal "pulumi-svmkit isn't clean; refusing to tag!"
 
-    cd provider
-    go get github.com/abklabs/svmkit/pkg@"$SVMKIT_VERSION"
+	cd provider
+	go get github.com/abklabs/svmkit/pkg@"$SVMKIT_VERSION"
 
-    if ! git::repo::is-clean; then
-        go mod tidy
-        git add go.*
-        git commit -m "Update to svmkit $SVMKIT_VERSION"
-    fi
+	if ! git::repo::is-clean; then
+		go mod tidy
+		git add go.*
+		git commit -m "Update to svmkit $SVMKIT_VERSION"
+	fi
 
-    cd ..
+	cd ..
 
-    make
-    echo "${PULUMI_SVMKIT_VERSION#v}" >sdk/dotnet/version.txt
-    git add sdk
-    git commit -a -m "Resync generated SDK"
+	make
+	echo "${PULUMI_SVMKIT_VERSION#v}" >sdk/dotnet/version.txt
+	git add sdk
+	git commit -a -m "Resync generated SDK"
 
-    make-tag pulumi-svmkit "$PULUMI_SVMKIT_VERSION"
-    make-tag pulumi-svmkit "sdk/go/$PULUMI_SVMKIT_VERSION"
-    make
+	make-tag pulumi-svmkit "$PULUMI_SVMKIT_VERSION"
+	make-tag pulumi-svmkit "sdk/go/$PULUMI_SVMKIT_VERSION"
+	make
 
-    if ! git::repo::is-clean; then
-        log::error "repository wasn't clean after tagging and rebuild!"
-        git status
-        exit 1
-    fi
+	if ! git::repo::is-clean; then
+		log::error "repository wasn't clean after tagging and rebuild!"
+		git status
+		exit 1
+	fi
 
-    if "$PUSH"; then
-        git push
-        git push --tags
-    fi
+	if "$PUSH"; then
+		git push
+		git push --tags
+	fi
 )
 
 log::info "finished tagging!"

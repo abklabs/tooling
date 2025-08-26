@@ -4,18 +4,18 @@ set -euo pipefail
 
 OS=$(uname)
 
-log::fatal () {
-    echo "FATAL: $*"
-    exit 1
+log::fatal() {
+	echo "FATAL: $*"
+	exit 1
 }
 
-log::info () {
-    echo "INFO: $*"
+log::info() {
+	echo "INFO: $*"
 }
 
 [[ $OS == Darwin ]] || log::fatal "bootstrapping currently only supports Darwin/OS X!"
 
-brew shellenv > /dev/null 2>&1 || log::fatal "this bootstrapper requires homebrew be installed: https://brew.sh"
+brew shellenv >/dev/null 2>&1 || log::fatal "this bootstrapper requires homebrew be installed: https://brew.sh"
 
 log::info "configuring git to use SSH instead of HTTPS for GitHub..."
 git config --global url."git@github.com:".insteadOf "https://github.com/"

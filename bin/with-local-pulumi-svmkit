@@ -1,22 +1,23 @@
 #!/usr/bin/env opsh
 
-usage () {
-    local ret=0
+usage() {
+	local ret=0
 
-    if [[ $# -gt 0 ]] ; then
-	log::error "$*"
-	ret=1
-    fi
-    
-    echo "usage: $0 pulumi-svmkit-directory cmd0 [cmd1..cmdn]"
-    exit "$ret"
+	if [[ $# -gt 0 ]]; then
+		log::error "$*"
+		ret=1
+	fi
+
+	echo "usage: $0 pulumi-svmkit-directory cmd0 [cmd1..cmdn]"
+	exit "$ret"
 }
 
 [[ $# -gt 0 ]] || usage "a directory containing pulumi artifacts must be passed"
 [[ $# -gt 1 ]] || usage "you must provide a command to run after the pulumi stack is setup"
 [[ -f Pulumi.yaml ]] || usage "this must be run from a directory with a pulumi stack"
 
-PULUMI_SVMKIT_DIR=$1 ; shift
+PULUMI_SVMKIT_DIR=$1
+shift
 
 [[ -x $PULUMI_SVMKIT_DIR/bin/pulumi-resource-svmkit ]] || usage "built pulumi-svmkit provider not found"
 
@@ -24,12 +25,12 @@ rm -rf node_modules venv
 
 pulumi install
 
-if [[ -d node_modules ]] ; then
-    yarn add "$PULUMI_SVMKIT_DIR"/sdk/nodejs/bin
-elif [[ -d venv ]] ; then
-    ./venv/bin/pip install "$PULUMI_SVMKIT_DIR"/sdk/python/bin/dist/pulumi_svmkit-*.tar.gz
+if [[ -d node_modules ]]; then
+	yarn add "$PULUMI_SVMKIT_DIR"/sdk/nodejs/bin
+elif [[ -d venv ]]; then
+	./venv/bin/pip install "$PULUMI_SVMKIT_DIR"/sdk/python/bin/dist/pulumi_svmkit-*.tar.gz
 else
-    log::fatal "don't know how to install a local SDK in this pulumi stack"
+	log::fatal "don't know how to install a local SDK in this pulumi stack"
 fi
 
 PATH=$(realpath "$PULUMI_SVMKIT_DIR/bin"):$PATH "${@}"
