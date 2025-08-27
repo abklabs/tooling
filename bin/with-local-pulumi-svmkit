@@ -23,6 +23,8 @@ shift
 
 rm -rf node_modules venv
 
+PATH=$(realpath "$PULUMI_SVMKIT_DIR/bin"):$PATH
+
 pulumi install
 
 if [[ -d node_modules ]]; then
@@ -33,4 +35,4 @@ else
 	log::fatal "don't know how to install a local SDK in this pulumi stack"
 fi
 
-PATH=$(realpath "$PULUMI_SVMKIT_DIR/bin"):$PATH "${@}"
+"${@}"
