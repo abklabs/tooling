@@ -15,12 +15,15 @@ usage() {
 [[ $# -gt 0 ]] || usage "you must provide a command to run after the pulumi stack is setup"
 [[ -f Pulumi.yaml ]] || usage "this must be run from a directory with a pulumi stack"
 
+attempt-pulumi-down() {
+	pulumi down --yes || log::error "failed to bring pulumi down"
+}
+
+exit::trigger attempt-pulumi-down
+
 pulumi up --yes
 
 RET=0
-
 "${@}" || RET=$?
-
-pulumi down --yes
 
 exit "$RET"
